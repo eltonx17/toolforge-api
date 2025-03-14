@@ -5,7 +5,7 @@ FROM eclipse-temurin:23-jdk
 WORKDIR /app
 
 # Copy the project’s jar file into the container at /app
-COPY target/toolforge-0.0.1-SNAPSHOT.jar app.jar
+COPY target/toolforge-api-0.0.1-SNAPSHOT.jar app.jar
 
 # Make port 8080 available to the world outside this container
 EXPOSE 8080
