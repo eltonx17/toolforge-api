@@ -65,16 +65,20 @@ public class GeminiService {
                 .bodyValue(requestPayload)
                 .retrieve()
                 .bodyToFlux(String.class)
-                .concatMap(chunk -> { // Process chunks sequentially
+                .concatMap(chunk -> {
                     buffer.append(chunk);
                     log.trace("Buffer content after append: >>>{}<<<", buffer.toString());
                     List<String> completeJsonObjects = extractCompleteJsonObjects(buffer);
 
+                    if (completeJsonObjects.isEmpty()) {
+                        return Flux.empty();
+                    }
+
                     return Flux.fromIterable(completeJsonObjects)
-                            .map(this::extractTextDirectly);
+                            .map(this::extractTextDirectly)
+                            .filter(Objects::nonNull)
+                            .filter(text -> !text.isEmpty());
                 })
-                .filter(Objects::nonNull)
-                .filter(text -> !text.isEmpty())
                 .doOnNext(textToken -> {
                     log.trace("Sending text token to consumer: {}", textToken);
                     tokenConsumer.accept(textToken);
@@ -86,21 +90,26 @@ public class GeminiService {
                 .doOnComplete(() -> {
                     log.debug("Stream complete signal received. Processing remaining buffer: >>>{}<<<", buffer.toString());
                     List<String> remainingJsonObjects = extractCompleteJsonObjects(buffer);
-                    remainingJsonObjects.forEach(json -> {
+
+                    for (String json : remainingJsonObjects) {
                         String remainingText = extractTextDirectly(json);
                         if (remainingText != null && !remainingText.isEmpty()) {
                             log.trace("Sending remaining text token from buffer: {}", remainingText);
                             tokenConsumer.accept(remainingText);
                         }
-                    });
+                    }
+
                     if (buffer.length() > 0) {
                         log.warn("Stream completed with non-empty, non-parsable buffer content left: >>>{}<<<", buffer.toString());
+                        buffer.setLength(0); // Clear the buffer to prevent stale data issues
                     }
+
                     log.info("Gemini stream processing finished.");
                     onComplete.run();
                 })
                 .subscribe();
     }
+
 
     /**
      * Extracts one or more complete JSON objects or arrays from the buffer.
