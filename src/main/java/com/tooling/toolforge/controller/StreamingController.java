@@ -7,7 +7,11 @@ import reactor.core.publisher.Flux;
 
 @RestController
 @RequestMapping("/stream")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = {
+        "http://localhost:4200",
+        "https://tool-forge.vercel.app",
+        "http://192.168.0.109:4200"
+})
 public class StreamingController {
 
     private final OpenRouterService openRouterService;
