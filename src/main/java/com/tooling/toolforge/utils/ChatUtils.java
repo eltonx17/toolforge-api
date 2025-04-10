@@ -1,6 +1,7 @@
 package com.tooling.toolforge.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -17,12 +18,12 @@ public class ChatUtils {
         return originalFlux
                 .map(chunk -> {
                     // Guard against null/empty chunks
-                    if (chunk == null || chunk.isEmpty()) {
+                    if (StringUtils.isEmpty(chunk)) {
                         return "";
                     }
 
                     // Check if it starts with exactly one space
-                    if (chunk.startsWith(" ") && (chunk.length() == 1 || !chunk.startsWith("  "))) {
+                    if (chunk.startsWith(" ") && (!chunk.startsWith("  "))) {
                         // It starts with a single space. Prepend another one.
                         log.trace("Doubling leading space for chunk: '{}'", chunk);
                         return " " + chunk;

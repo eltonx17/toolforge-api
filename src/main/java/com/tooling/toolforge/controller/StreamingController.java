@@ -1,6 +1,7 @@
 package com.tooling.toolforge.controller;
 
 import com.tooling.toolforge.service.OpenRouterService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -12,6 +13,7 @@ import reactor.core.publisher.Flux;
         "https://tool-forge.vercel.app",
         "http://192.168.0.109:4200"
 })
+@Slf4j
 public class StreamingController {
 
     private final OpenRouterService openRouterService;
@@ -20,10 +22,16 @@ public class StreamingController {
         this.openRouterService = openRouterService;
     }
 
-    @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> streamChat(@RequestParam(defaultValue = "Tell me a short joke about programming.") String message) {
-        return openRouterService.streamChatCompletion(message);
+    @PostMapping(value = "/chat", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> streamChat(@RequestBody String message) {
+        log.info("Received chat request (POST - text/plain) with message length: {}", message.length());
+        // The core logic remains the same
+        return openRouterService.streamChatCompletion(message)
+                .doOnError(e -> log.error("Error during chat streaming", e))
+                .doOnCancel(() -> log.info("Chat stream cancelled"))
+                .doOnComplete(() -> log.info("Chat stream completed"));
     }
+
 
     @GetMapping(value = "/chat-model", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamChatWithModel(

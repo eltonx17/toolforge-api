@@ -15,7 +15,7 @@ public class JsonController {
     @PostMapping("/format")
     public ResponseEntity<String> formatJson(@RequestBody JsonRequest request) {
         try {
-            Object jsonObject = objectMapper.readValue(request.getJson(), Object.class);
+            Object jsonObject = objectMapper.readValue(request.getMessage(), Object.class);
             String formattedJson = objectMapper.writeValueAsString(jsonObject);
             return ResponseEntity.ok(formattedJson);
         } catch (Exception e) {
