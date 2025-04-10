@@ -6,5 +6,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class JsonRequest {
-    private String json;
+    private String message;
 }
