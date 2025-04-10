@@ -32,7 +32,6 @@ public class StreamingController {
                 .doOnComplete(() -> log.info("Chat stream completed"));
     }
 
-
     @GetMapping(value = "/chat-model", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamChatWithModel(
             @RequestParam(defaultValue = "Write a haiku about clouds.") String message,
