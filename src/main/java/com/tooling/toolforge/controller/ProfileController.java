@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.*;
         "http://192.168.0.109:4200"
 })
 @Slf4j
-public class SignUpController {
+public class ProfileController {
 
     @PostMapping("/user")
-    public ResponseEntity<ProfileResponse> handleSignUp(@RequestBody ProfileRequest profileRequest) {
+    public ResponseEntity<ProfileResponse> handleProfile(@RequestBody ProfileRequest profileRequest) {
 
         if (profileRequest.getEmail() == null || profileRequest.getEmail().isBlank()) {
             return ResponseEntity.badRequest().body(new ProfileResponse("Username, email, and password are required."));
@@ -34,7 +34,7 @@ public class SignUpController {
 
         } catch (Exception e) {
             log.error("User transaction failed: {}", e.getMessage());
-            ProfileResponse errorResponse = new ProfileResponse("Signup failed: " + e.getMessage());
+            ProfileResponse errorResponse = new ProfileResponse("Profile processing failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
