@@ -3,6 +3,7 @@ package com.tooling.toolforge.controller;
 import com.tooling.toolforge.model.user.ProfileRequest;
 import com.tooling.toolforge.model.user.ProfileResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +37,16 @@ public class ProfileController {
             log.error("User transaction failed: {}", e.getMessage());
             ProfileResponse errorResponse = new ProfileResponse("Profile processing failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @GetMapping("/user-details/{email}")
+    public ResponseEntity<ProfileResponse> getUserByEmail(@PathVariable String email) {
+        if (!StringUtils.isEmpty(email)) {
+            ProfileResponse userDto = new ProfileResponse(email, 123L);
+            return ResponseEntity.ok(userDto);
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
 }
