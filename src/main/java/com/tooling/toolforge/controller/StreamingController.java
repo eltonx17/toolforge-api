@@ -6,6 +6,8 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
+import java.time.Duration;
+
 @RestController
 @RequestMapping("/stream")
 @CrossOrigin(origins = {
@@ -27,6 +29,7 @@ public class StreamingController {
         log.info("Received chat request (POST - text/plain) with message length: {}", message.length());
         // The core logic remains the same
         return openRouterService.streamChatCompletion(message)
+                .delayElements(Duration.ofMillis(200))
                 .doOnError(e -> log.error("Error during chat streaming", e))
                 .doOnCancel(() -> log.info("Chat stream cancelled"))
                 .doOnComplete(() -> log.info("Chat stream completed"));
