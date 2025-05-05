@@ -18,7 +18,8 @@ public class CORSConfig {
                         .allowedOrigins("http://localhost:4200", "https://tool-forge.vercel.app", "http://192.168.0.109")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allow necessary methods
                         .allowedHeaders("*") // Allow all headers
-                        .allowCredentials(false); // Set to true if you need credentials/cookies
+                        .allowCredentials(false)
+                        .exposedHeaders("Session-Id"); // Set to true if you need credentials/cookies
             }
         };
     }
