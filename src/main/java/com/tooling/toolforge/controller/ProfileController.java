@@ -4,6 +4,8 @@ import com.tooling.toolforge.model.user.ProfileRequest;
 import com.tooling.toolforge.model.user.ProfileResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,8 @@ public class ProfileController {
 
     @PostMapping("/user")
     public ResponseEntity<ProfileResponse> handleProfile(@RequestBody ProfileRequest profileRequest) {
+
+        MongoTemplate mongoTemplate;
 
         if (profileRequest.getEmail() == null || profileRequest.getEmail().isBlank()) {
             return ResponseEntity.badRequest().body(new ProfileResponse("Username, email, and password are required."));

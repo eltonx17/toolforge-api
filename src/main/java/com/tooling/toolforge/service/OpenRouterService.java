@@ -28,7 +28,6 @@ public class OpenRouterService {
      */
     public Flux<String> streamChatCompletion(String message) {
         Prompt prompt = new Prompt(message);
-        log.info("Sending prompt to AI: '{}'", message);
 
         Flux<String> originalFlux = chatClient.prompt(prompt)
                 .stream()

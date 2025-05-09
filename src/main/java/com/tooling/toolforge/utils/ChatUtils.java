@@ -34,6 +34,6 @@ public class ChatUtils {
                     }
                 })
                 .doOnError(error -> log.error("Error during AI stream processing", error))
-                .doOnComplete(() -> log.info("AI stream completed for prompt: '{}'", message));
+                .doOnComplete(() -> log.info("AI stream completed"));
     }
 }
