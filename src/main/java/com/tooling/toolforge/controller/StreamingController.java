@@ -49,6 +49,11 @@ public class StreamingController {
         return ResponseEntity.ok(UUID.randomUUID().toString());
     }
 
+    @GetMapping("/history")
+    public ResponseEntity<String> getHistory() {
+        return ResponseEntity.ok("{\"k\": \"v\"}");
+    }
+
     @PostMapping(value = "/chat", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<Flux<String>> streamChat(
             @RequestHeader(value = "Session-Id", required = false) String sessionId,
