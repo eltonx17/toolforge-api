@@ -52,6 +52,7 @@ public class StreamingController {
     @PostMapping(value = "/chat", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<Flux<String>> streamChat(
             @RequestHeader(value = "Session-Id", required = false) String sessionId,
+            @RequestHeader(value = "Userid", required = false) String userId,
             @RequestBody String newMessage) {
 
         if (sessionId == null || sessionId.isBlank()) { // sessionId.isBlank() is Java 11+
@@ -74,6 +75,7 @@ public class StreamingController {
                         log.info("ChatSession with id '{}' not found. Creating new session.", redisKey);
                         ChatSession newSession = new ChatSession();
                         newSession.setId(redisKey);
+                        newSession.setUserId(userId);
                         newSession.setMessages(new ArrayList<>()); // Initialize messages list
                         return newSession;
                     });

@@ -13,6 +13,7 @@ import java.util.List;
 public class ChatSession {
     @Id
     private String id;
+    private String userId;
     private List<Message> messages = new ArrayList<>();
     private Instant lastUpdated;
 
