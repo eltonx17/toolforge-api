@@ -63,10 +63,10 @@ public class StreamingController {
         String redisKey = sessionId.trim();
         List<String> history = redisTemplate.opsForList().range(redisKey, 0, -1);
         String context = (history != null && !history.isEmpty())
-                ? String.join("\n", history) + "\nUser: " + newMessage
-                : "User: " + newMessage;
+                ? String.join("\n", history) + "\n" + newMessage
+                : newMessage;
 
-        redisTemplate.opsForList().rightPush(redisKey, "User: " + newMessage);
+        redisTemplate.opsForList().rightPush(redisKey, newMessage);
 
         // Upsert user message to MongoDB
         try {
@@ -109,7 +109,7 @@ public class StreamingController {
                         // For now, we proceed to save it as an empty message if the session exists
                     }
 
-                    redisTemplate.opsForList().rightPush(redisKey, "Bot: " + fullResponse);
+                    redisTemplate.opsForList().rightPush(redisKey, fullResponse);
 
                     try {
                         chatRepository.findById(redisKey).ifPresentOrElse(session -> {
