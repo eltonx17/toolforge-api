@@ -180,7 +180,6 @@ public class StreamingController {
             log.info("Successfully saved/updated user message for session id: {}", redisKey);
         } catch (DataAccessException e) {
             log.error("MongoDB Error: Failed to save user message for session id: {}. Reason: {}", redisKey, e.getMessage(), e);
-            // Consider if you should return an error response here or if the stream should still proceed
         } catch (Exception e) {
             log.error("Unexpected Error: Failed to save user message for session id: {}. Reason: {}", redisKey, e.getMessage(), e);
         }
