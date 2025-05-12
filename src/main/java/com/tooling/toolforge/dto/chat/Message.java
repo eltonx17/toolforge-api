@@ -1,4 +1,4 @@
-package com.tooling.toolforge.model.chat;
+package com.tooling.toolforge.dto.chat;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

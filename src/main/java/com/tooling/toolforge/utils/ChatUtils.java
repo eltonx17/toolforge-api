@@ -36,4 +36,19 @@ public class ChatUtils {
                 .doOnError(error -> log.error("Error during AI stream processing", error))
                 .doOnComplete(() -> log.info("AI stream completed"));
     }
+
+    public static String getDayWithOrdinalSuffix(int day) {
+        if (day >= 1 && day <= 31) {
+            if (day >= 11 && day <= 13) {
+                return day + "th";
+            }
+            switch (day % 10) {
+                case 1:  return day + "st";
+                case 2:  return day + "nd";
+                case 3:  return day + "rd";
+                default: return day + "th";
+            }
+        }
+        throw new IllegalArgumentException("Invalid day of month: " + day);
+    }
 }

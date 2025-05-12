@@ -1,4 +1,4 @@
-package com.tooling.toolforge.model.chat;
+package com.tooling.toolforge.dto.chat;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
