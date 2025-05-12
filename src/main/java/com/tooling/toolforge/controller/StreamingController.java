@@ -5,17 +5,20 @@ import com.tooling.toolforge.dto.chat.ChatSession;
 import com.tooling.toolforge.dto.chat.Message;
 // import com.tooling.toolforge.model.user.ProfileResponse; // Not used in this snippet
 import com.tooling.toolforge.dto.history.PaginatedHistoryResponse;
+import com.tooling.toolforge.dto.history.PaginatedSessionMessagesResponse;
 import com.tooling.toolforge.dto.history.SessionHistoryItem;
 import com.tooling.toolforge.service.OpenRouterService;
 import com.tooling.toolforge.utils.ChatUtils;
 import lombok.extern.slf4j.Slf4j;
 // import org.apache.commons.lang3.StringUtils; // Not strictly needed if sessionId.isBlank() is used and Java 11+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException; // Import for specific exception handling
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
@@ -34,13 +37,16 @@ import java.util.stream.Collectors;
         "http://192.168.0.109:4200"
 })
 @Slf4j
+@Service
 public class StreamingController {
 
     private final OpenRouterService openRouterService;
-    private final ChatRepository chatRepository; // Made final
-    private final RedisTemplate<String, String> redisTemplate; // Made final
+    private final ChatRepository chatRepository;
+    private final RedisTemplate<String, String> redisTemplate;
     private static final int HISTORY_PAGE_SIZE = 20; // Define page size as a constant
-
+    private static final int SESSION_MESSAGE_PAGE_SIZE = 6; // Page size for session messages
+    @Autowired
+    ChatUtils chatUtils;
 
     // Constructor injection for all dependencies
     public StreamingController(OpenRouterService openRouterService,
@@ -54,6 +60,74 @@ public class StreamingController {
     @GetMapping("/session")
     public ResponseEntity<String> generateSession() {
         return ResponseEntity.ok(UUID.randomUUID().toString());
+    }
+
+    @GetMapping("/history/messages")
+    public ResponseEntity<?> getSessionMessages(
+            @RequestHeader(value = "Userid", required = false) String userId,
+            @RequestParam String sessionId,
+            @RequestParam(value = "page", defaultValue = "1") int page) {
+
+        log.info("Attempting to fetch messages for sessionId: {}, page: {}", sessionId, page);
+
+        if (page < 1) {
+            log.warn("Invalid page number {} requested for sessionId: {}", page, sessionId);
+            return ResponseEntity.badRequest().body("Page number must be 1 or greater.");
+        }
+
+        Optional<ChatSession> sessionOptional;
+        try {
+            sessionOptional = chatRepository.findById(sessionId);
+        } catch (DataAccessException e) {
+            log.error("MongoDB Error: Failed to fetch session for id: {}. Reason: {}", sessionId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error accessing session data.");
+        }
+
+
+        if (sessionOptional.isEmpty()) {
+            log.warn("ChatSession not found for id: {}", sessionId);
+            return ResponseEntity.notFound().build();
+        }
+
+        ChatSession session = sessionOptional.get();
+        List<Message> allMessages = session.getMessages();
+
+        if (allMessages == null || allMessages.isEmpty()) {
+            log.info("No messages found for sessionId: {}", sessionId);
+            PaginatedSessionMessagesResponse response = new PaginatedSessionMessagesResponse(
+                    Collections.emptyList(), page, 0, 0
+            );
+            return ResponseEntity.ok(response);
+        }
+
+        int totalMessages = allMessages.size();
+        int totalPages = 0;
+        totalPages = (int) Math.ceil((double) totalMessages / SESSION_MESSAGE_PAGE_SIZE);
+
+        if ((totalPages == 0 && page > 1) || (totalPages > 0 && page > totalPages)) {
+            log.warn("Invalid page number {} requested for sessionId: {}. Total pages: {}", page, sessionId, totalPages);
+            return ResponseEntity.badRequest().body(String.format("Invalid page number. Page must be between 1 and %d.", Math.max(1, totalPages)));
+        }
+
+        int startIndex = Math.max(0, totalMessages - (page * SESSION_MESSAGE_PAGE_SIZE));
+        int endIndex = totalMessages - ((page - 1) * SESSION_MESSAGE_PAGE_SIZE);
+
+        List<Message> paginatedMessagesSublist = Collections.emptyList();
+        if (startIndex < endIndex) {
+            paginatedMessagesSublist = allMessages.subList(startIndex, endIndex);
+        }
+
+        List<Message> messagesForPage = new ArrayList<>(paginatedMessagesSublist);
+        Collections.reverse(messagesForPage);
+
+        log.info("Successfully fetched {} messages for sessionId: {}, page: {}. Total pages: {}",
+                messagesForPage.size(), sessionId, page, totalPages);
+
+        PaginatedSessionMessagesResponse response = new PaginatedSessionMessagesResponse(
+                messagesForPage, page, totalPages, totalMessages
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/history")
@@ -154,6 +228,9 @@ public class StreamingController {
         }
 
         String redisKey = sessionId.trim();
+
+        chatUtils.checkRedisAndLoadIfAbsent(redisTemplate, redisKey);
+
         List<String> history = redisTemplate.opsForList().range(redisKey, 0, -1);
         String context = (history != null && !history.isEmpty())
                 ? String.join("\n", history) + "\n" + newMessage
@@ -168,7 +245,7 @@ public class StreamingController {
                         log.info("ChatSession with id '{}' not found. Creating new session.", redisKey);
                         ChatSession newSession = new ChatSession();
                         newSession.setId(redisKey);
-                        newSession.setUserId(userId);
+                        newSession.setUserId(userId); // Assign userId if available
                         newSession.setMessages(new ArrayList<>()); // Initialize messages list
                         return newSession;
                     });
@@ -197,8 +274,6 @@ public class StreamingController {
                         log.warn("Collected response parts but fullResponse is empty for session {}. This might indicate non-string elements or an issue with String.join.", redisKey);
                     } else if (fullResponse.isEmpty()) {
                         log.info("Stream completed with an empty response for session {}.", redisKey);
-                        // Decide if an empty bot response should be saved
-                        // For now, we proceed to save it as an empty message if the session exists
                     }
 
                     redisTemplate.opsForList().rightPush(redisKey, fullResponse);
