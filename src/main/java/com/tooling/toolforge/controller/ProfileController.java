@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = {
         "http://localhost:4200",
         "https://tool-forge.vercel.app",
+        "https://toolforge.in",
         "http://192.168.0.109:4200"
 })
 @Slf4j

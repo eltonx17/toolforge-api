@@ -15,7 +15,7 @@ public class CORSConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // Allow CORS for all endpoints
                         // Adjust the allowed origin to your Angular dev server URL
-                        .allowedOrigins("http://localhost:4200", "https://tool-forge.vercel.app", "http://192.168.0.109")
+                        .allowedOrigins("http://localhost:4200", "https://tool-forge.vercel.app", "http://192.168.0.109", "https://toolforge.in")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allow necessary methods
                         .allowedHeaders("*") // Allow all headers
                         .allowCredentials(false)
